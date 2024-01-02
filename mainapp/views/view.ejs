@@ -1,0 +1,115 @@
+<%- include('./port/layout-start-view', {title: title}) %>
+<%- include('./port/menu') %>
+
+<h1><%= title %></h1>
+
+<div class="row">
+    <div class="col-sm-8">
+        <div class="card">
+            <div class="card-body">
+
+                <h5 class="card-title"><%= book.title %> - <%= book.authors %></h5>
+                <p class="card-text"><%= book.description %></p>
+
+                <% if(book.fileName != "") {%>
+                    <p class="card-text"><a href="/<%= book.id %>/download">Скачать книгу</a> <%= book.fileName %></p>
+                <%} %>
+
+                <p class="card-text">Количество просмотров книги: <span style="color:red;"><%= book.bookView %></span></span></p>
+
+ 
+                <div class="text-right">
+                    <a class="btn btn-sm btn-primary" href="/update/<%= book.id %>">
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                    </a>
+                    <form action="/delete/<%= book.id %>" method="POST" class="d-inline">
+                        <button class="btn btn-sm btn-danger">
+                            <i class="fa fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-4">
+        <h2>Обсуждение книги</h2>
+    </div>        
+</div>
+
+
+<div class="row">
+    <div class="col-4">
+
+        <div id="list" class="list-group">
+
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top: 30px;">
+    <div class="col-4">
+        <div class="form-group">
+            <input
+                    placeholder="Ваше имя"
+                    type="text"
+                    id="username"
+                    class="form-control"
+            >
+        </div>
+        <div class="form-group">
+            <textarea
+                    placeholder="Ваше сообщение"
+                    class="form-control"
+                    id="text"
+            ></textarea>
+        </div>
+        <button type="submit" id="send-room" class="btn btn-primary">Отправить</button>
+    </div>
+</div>
+
+
+<script>
+    const roomName = location.pathname.split('/').pop();
+    const socket = io.connect('/', {query: `roomName=${roomName}`});
+    
+    const boxList       = document.querySelector('#list');
+    const inputUsername = document.querySelector('#username');
+    const inputText     = document.querySelector('#text');
+    const sendRoom      = document.querySelector('#send-room');
+
+    const getTmp = (msg) => {
+        return `
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <small>${msg.username}</small>
+                    </div>
+                    <div class="mymessage"><p class="mb-1">${msg.text}</p></div>
+                </div>
+        `;
+    };
+
+
+
+    socket.on('message-to-room', (msg) => {
+        const div = getTmp(msg)
+        boxList.insertAdjacentHTML('beforeend', div)
+    });
+
+    sendRoom.addEventListener('click', () => {
+        socket.emit('message-to-room', {
+            username: inputUsername.value,
+            text: inputText.value,
+        })
+    })
+
+
+</script>
+
+
+
+<%- include('./port/layout-end') %>
