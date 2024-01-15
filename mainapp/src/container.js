@@ -4,3 +4,5 @@ import { BooksRepository } from "./book/book.repository";
 
 const container = new Container();
 container.bind(BooksRepository).toSelf();
+
+export default container;
