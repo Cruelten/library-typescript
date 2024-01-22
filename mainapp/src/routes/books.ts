@@ -1,10 +1,10 @@
-const express = require('express')
-const router = express.Router()
-const Books = require('../models/books')
-const fileMulter = require('../middleware/file') //multer
-const { v4: uuid } = require('uuid')
-const container = require('./container') // имортируем контейнер
-
+import express from "express";
+import { Router } from "express";
+import Books from "../models/books";
+import fileMulter from "../middleware/file";  //multer 
+import { v4: uuid } from "uuid";
+import container from "../container"; //имортируем контейнер 
+const router = Router();
 
 router.get('/', async (req, res) => { //получаем все книги
     try {
@@ -17,6 +17,16 @@ router.get('/', async (req, res) => { //получаем все книги
 
 
 
+// router.get('/:id', async (req, res) => { //Получаем книгу по ее ID
+//     const {id} = req.params
+
+//     try {
+//         const book = await Books.findById(id)
+//         res.json(book)
+//     } catch (e) {
+//         res.status(404).json(e)
+//     }
+// });
 
 
 router.get('/:id', async (req, res) => { //Получаем книгу по ее ID. Используем получение данных из контейнера
@@ -89,6 +99,4 @@ router.delete('/:id', async (req, res) => {
     }   
 })
 
-
-
-module.exports = router
+export default router;
