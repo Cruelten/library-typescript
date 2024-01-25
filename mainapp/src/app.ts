@@ -1,26 +1,26 @@
+import "reflect-metadata";
+
 import express from "express";
 import session from "express-session";
 import http from "http";
 import socketIO from "socket.io";
 import passport from "passport";
-import LocalStrategy from "passport-local";
+import { Strategy as LocalStrategy } from 'passport-local';
 import bcrypt from "bcryptjs"; //работаем с паролями
-import mongoose from "mongoose"; //работаем с базой
 import User from "./models/users"; //Путь к модели пользователей
-
+import "./container"; //импортируем контейнер
 
 import errorMiddleware from "./middleware/error";
-import indexBoooks from "./routes/index";
 import apiBoooks from "./routes/books";
 
 
 const app = express();
-const server = http.Server(app);
+const server = new http.Server(app);
 const io = socketIO(server);
 
 // Socket IO
 
-io.on('connection', (socket) => {
+io.on('connection', (socket: any) => {
   const {id} = socket;
   console.log(`Socket connected: ${id}`);
 
@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
   const {roomName} = socket.handshake.query;
   console.log(`Socket roomName: ${roomName}`);
   socket.join(roomName);
-  socket.on('message-to-room', (msg) => {
+  socket.on('message-to-room', (msg: any) => {
       msg.type = `room: ${roomName}`;
       socket.to(roomName).emit('message-to-room', msg);
       socket.emit('message-to-room', msg);
@@ -47,17 +47,17 @@ io.on('connection', (socket) => {
 
 
 // Функции для работы с паролями
-const hashPassword = async (password) => {
+const hashPassword = async (password: any) => {
   const saltRounds = 10;
   return bcrypt.hash(password, saltRounds);
 };
 
-const verifyPassword = async (inputPassword, storedHash) => {
+const verifyPassword = async (inputPassword: any, storedHash: any) => {
   return bcrypt.compare(inputPassword, storedHash);
 };
 
 // Стратегия аутентификации
-const verify = async (username, password, done) => {
+const verify = async (username: String, password: String, done: any) => {
   try {
     const user = await User.findOne({ username: username });
     if (!user) {
@@ -163,8 +163,6 @@ app.post('/api/user/signup', async (req, res) => {
   }
 });
 
-
-app.use('/', indexBoooks) //работаем с книгами
 app.use('/api/books', apiBoooks) //работаем с книгами по API
 app.use(errorMiddleware);
 
@@ -172,58 +170,3 @@ app.use(errorMiddleware);
 
 
 
-interface Book  {
-    id: string; 
-    title: string;
-    description: string;
-    authors: string;
-    favorite: string;
-    fileCover: string;
-    fileName: string;
-}
-
-abstract class BooksRepository {
-    createBook(book: Book): Book {
-        // создаем книгу
-        console.log("Книга создана успешно");
-        return; //Возвращаем созданную книгу
-    }
-    getBook(id: string): Book {
-        console.log("Книга получена успешно");
-        return; //возвращаем книгу по ID
-    }
-    getBooks(): Book[] {
-        console.log("Книги получены успешно");
-        return; //получаем массив книг
-    }
-    updateBook(id: string): Book {
-        // обновление книги
-        console.log("Книга успешно обновлена");
-        return; //возвращаем обновленную книгу
-    }
-    deleteBook(id: string) {
-        // удаляем книгу
-        console.log("Книга успешно удалена");
-    }
-}
-
-
-
-
-// Подключение к MongoDB и запуск сервера
-const PORT = 3000;
-const mongoserver = 'root:example@mongo:27017';
-const database = 'admin';
-
-// server.listen(3000);
-mongoose.connect(`mongodb://${mongoserver}/${database}`, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => {
-    console.log('MongoDB connected!!');
-    server.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
-  })
-  .catch((err) => {
-    console.log('Failed to connect to MongoDB', err);
-  });
