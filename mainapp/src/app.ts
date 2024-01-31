@@ -3,11 +3,11 @@ import "reflect-metadata";
 import express from "express";
 import session from "express-session";
 import http from "http";
-import socketIO from "socket.io";
+import { Server } from "socket.io";
 import passport from "passport";
-import { Strategy as LocalStrategy } from 'passport-local';
+import passportLocal from "passport-local";
 import bcrypt from "bcryptjs"; //работаем с паролями
-import User from "./models/users"; //Путь к модели пользователей
+import Users from "./models/users"; //Путь к модели пользователей
 import "./container"; //импортируем контейнер
 
 import errorMiddleware from "./middleware/error";
@@ -16,7 +16,8 @@ import apiBoooks from "./routes/books";
 
 const app = express();
 const server = new http.Server(app);
-const io = socketIO(server);
+const io = new Server(server);
+const LocalStrategy = passportLocal.Strategy;
 
 // Socket IO
 
@@ -41,11 +42,6 @@ io.on('connection', (socket: any) => {
 
 // END Socket IO
 
-
-
-
-
-
 // Функции для работы с паролями
 const hashPassword = async (password: any) => {
   const saltRounds = 10;
@@ -59,7 +55,7 @@ const verifyPassword = async (inputPassword: any, storedHash: any) => {
 // Стратегия аутентификации
 const verify = async (username: String, password: String, done: any) => {
   try {
-    const user = await User.findOne({ username: username });
+    const user = await Users.findOne({ username: username });
     if (!user) {
       console.log('User not found');
       return done(null, false, { message: 'Неправильное имя пользователя.' });
@@ -81,15 +77,16 @@ const verify = async (username: String, password: String, done: any) => {
 
 passport.use('local', new LocalStrategy({ usernameField: 'username', passwordField: 'password' }, verify));
 
-passport.serializeUser((user, cb) => {
+passport.serializeUser((user: any, cb) => {
   console.log(user, 'user');
   cb(null, user._id);
 });
 
+
 passport.deserializeUser(async (id, cb) => {
   try {
     console.log(id, 'id');
-    const user = await User.findById(id);
+    const user = await Users.findById(id);
     console.log(user, 'user');
     cb(null, user);
   } catch (err) {
@@ -148,13 +145,13 @@ app.post('/api/user/signup', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const existingUser = await User.findOne({ username: username });
+    const existingUser = await Users.findOne({ username: username });
     if (existingUser) {
       return res.status(400).send('Пользователь уже существует.');
     }
 
     const hashedPassword = await hashPassword(password);
-    const newUser = new User({ username, password: hashedPassword });
+    const newUser = new Users({ username, password: hashedPassword });
     await newUser.save();
 
     res.status(201).send('Пользователь создан. <a href="/api/user/login">Войти</a>');

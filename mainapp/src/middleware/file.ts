@@ -1,10 +1,10 @@
 import multer from 'multer';
 
 const storage = multer.diskStorage({
-    destination(req, file, cb){
+    destination(req: any, file: any, cb: any){
         cb(null, 'public/pdf')
     },
-    filename(req, file, cb) {
+    filename(req: any, file: any, cb: any) {
         cb(null, `${Date.now()}-${file.originalname}`)
     }
 })
